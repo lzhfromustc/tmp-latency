@@ -89,8 +89,6 @@ else
     echo "Main memory measurement skipped due to missing L3 size."
 fi
 
-echo "MLC measurements completed."
-
 # Extract latency in nanoseconds (ns) using grep and awk
 LATENCY_L1=$(echo "$OUTPUT_L1" | grep "Each iteration took" | awk '{print $9}')
 LATENCY_L2=$(echo "$OUTPUT_L2" | grep "Each iteration took" | awk '{print $9}')
@@ -106,11 +104,13 @@ run_mlc_20() {
     for i in $(seq 1 20); do
         run_mlc "$CURRENT_SIZE" "TMP"
         CURRENT_SIZE=$((CURRENT_SIZE + INCREMENTS))
-        LATENCY_TMP=$(echo "$OUTPUT_MEM" | grep "Each iteration took" | awk '{print $9}')
+        LATENCY_TMP=$(echo "$OUTPUT_TMP" | grep "Each iteration took" | awk '{print $9}')
         echo "$CURRENT_SIZE $LATENCY_TMP"
     done
 }
 run_mlc_20
+
+echo "MLC measurements completed."
 
 # Run the 7zip benchmark
 # From https://7-zip.opensource.jp/chm/cmdline/commands/bench.htm
