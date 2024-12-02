@@ -1,6 +1,9 @@
 #!/bin/bash
 
-# Run this with `./run.sh | tee run.log`
+# Run this with
+# git clone https://github.com/lzhfromustc/tmp-latency.git
+# cd ./tmp-latency
+# ./run.sh | tee run.log
 
 # Old latency measurement that shouldn't be used
 # sudo apt-get -y install lmbench
@@ -52,7 +55,7 @@ fi
 # Function to run mlc with a specified buffer size
 run_mlc() {
     local buffer_size=$1
-    echo "Running MLC with buffer size: ${buffer_size} KB"
+    # echo "Running MLC with buffer size: ${buffer_size} KB"
     local level=$2
     local result=$(sudo "$MLC_BINARY" --idle_latency -b"${buffer_size}K" -t10 -c1 -i1)
     local varname="OUTPUT_${level}"
@@ -79,7 +82,7 @@ else
 fi
 
 # Run for main memory with a large buffer size
-MAIN_MEMORY_BUFFER=$((L3_SIZE * 10)) # 10 times the L3 size
+MAIN_MEMORY_BUFFER=$((L3_SIZE * 5)) # 5 times the L3 size
 if [ "$MAIN_MEMORY_BUFFER" -gt 0 ]; then
     run_mlc "$MAIN_MEMORY_BUFFER" "MEM"
 else
@@ -94,7 +97,20 @@ LATENCY_L2=$(echo "$OUTPUT_L2" | grep "Each iteration took" | awk '{print $9}')
 LATENCY_L3=$(echo "$OUTPUT_L3" | grep "Each iteration took" | awk '{print $9}')
 LATENCY_MEM=$(echo "$OUTPUT_MEM" | grep "Each iteration took" | awk '{print $9}')
 
+# Run MLC for 20 times
+run_mlc_20() {
+    INCREMENTS=$(( (5 * L3_SIZE - L2_SIZE) / 19 )) # Increment between runs
+    CURRENT_SIZE=$L2_SIZE
 
+    # Run MLC 20 times with increasing buffer sizes
+    for i in $(seq 1 20); do
+        run_mlc "$CURRENT_SIZE" "TMP"
+        CURRENT_SIZE=$((CURRENT_SIZE + INCREMENTS))
+        LATENCY_TMP=$(echo "$OUTPUT_MEM" | grep "Each iteration took" | awk '{print $9}')
+        echo "$CURRENT_SIZE $LATENCY_TMP"
+    done
+}
+run_mlc_20
 
 # Run the 7zip benchmark
 # From https://7-zip.opensource.jp/chm/cmdline/commands/bench.htm
@@ -136,3 +152,5 @@ echo "MIPS of 7zip under mmt1: $MIPS"
 
 
 # PERFLIST=$(perf list)
+# export LATENCY_L1,LATENCY_L2,LATENCY_L3,LATENCY_MEM
+# ./miss_full.sh
