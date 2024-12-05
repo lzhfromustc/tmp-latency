@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Run this script with
-sudo apt install -y build-essential; cd tmp-latency; git pull; ./poly.sh | tee ../poly.log
+# sudo apt install -y build-essential; cd tmp-latency; git pull; ./poly.sh | tee ../poly.log; cd ..
 
 
 # Prepare the perf config
