@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# Run this script with
+sudo apt install -y build-essential; cd tmp-latency; git pull; ./poly.sh | tee ../poly.log
+
+
 # Prepare the perf config
 sudo sh -c 'echo 1 >/proc/sys/kernel/perf_event_paranoid'
 
@@ -26,7 +30,6 @@ for binary in "${BINARIES[@]}"; do
     printf "$binary "
 done
 printf "\n"
-exit
 
 for binary in "${BINARIES[@]}"; do
     # Run the binary and suppress its output
