@@ -130,8 +130,9 @@ extract_value() {
 }
 
 # Run the 7zip bench and process its output
-command_to_run="taskset -c 1 7z b -mmt1"
+command_to_run="taskset -c 1 7z b 10 -md21 -mmt1"
 $command_to_run | extract_value
+# TODO: get the CPU freq
 
 # Retrieve the value from the temporary file
 MIPS=$(cat "$TMP_FILE")
@@ -149,6 +150,7 @@ echo "LATENCY_L3: $LATENCY_L3 ns"
 echo "LATENCY_MEM: $LATENCY_MEM ns"
 echo ""
 echo "MIPS of 7zip under mmt1: $MIPS"
+echo "Time of 7zip under mmt1: $ZIPTIME"
 
 
 # PERFLIST=$(perf list)

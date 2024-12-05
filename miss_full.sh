@@ -7,7 +7,7 @@ mem_load_retired.l2_hit,mem_load_retired.l2_miss,mem_load_retired.l3_hit,mem_loa
 # sudo perf stat -e L1-dcache-loads,L1-dcache-load-misses,mem_load_retired.l1_hit,mem_load_retired.l1_miss  $command_to_run
 # sudo perf stat -e branches,branch-misses,l2_rqsts.all_demand_miss,l2_rqsts.all_demand_references,mem_load_retired.l2_hit,mem_load_retired.l2_miss  $command_to_run
 # sudo perf stat -e branches,branch-misses,LLC-load-misses,LLC-loads,LLC-store-misses,LLC-stores,mem_load_retired.l3_hit,mem_load_retired.l3_miss  $command_to_run
-sudo perf stat -e  LLC-load-misses,LLC-loads,LLC-store-misses,LLC-stores $command_to_run
+# sudo perf stat -e  LLC-load-misses,LLC-loads,LLC-store-misses,LLC-stores $command_to_run
 
 # Extract values
 L1_HITS=$(echo "$OUTPUT" | grep 'mem_load_retired.l1_hit' | awk '{print $1}' | tr -d ',')
