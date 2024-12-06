@@ -3,11 +3,7 @@
 # Run this with
 # git clone https://github.com/lzhfromustc/tmp-latency.git
 # cd ./tmp-latency
-# ./run.sh | tee run.log
-
-# Old latency measurement that shouldn't be used
-# sudo apt-get -y install lmbench
-# /usr/lib/lmbench/bin/x86_64-linux-gnu/lat_mem_rd 128M 256
+# ./run.sh 2>&1 | tee -a run.log
 
 # Prepare the huge pages that mlc requires
 sudo sh -c 'echo 4000 > /proc/sys/vm/nr_hugepages'
@@ -19,6 +15,28 @@ sudo sh -c 'echo 1 >/proc/sys/kernel/perf_event_paranoid'
 sudo apt update  > /dev/null 2>&1
 sudo apt install -y p7zip-full p7zip-rar
 sudo apt install -y linux-tools-common linux-tools-$(uname -r)
+
+# Install and compile my valgrind
+sudo apt install -y build-essential autoconf
+cd ..
+CACHEGRIND_DIR=$(pwd/cachegrind-L3)
+if [ -d "$DIR" ]; then
+    cd cachegrind-L3
+    git pull
+else
+    git clone https://github.com/lzhfromustc/cachegrind-L3.git
+    cd cachegrind-L3
+fi
+./autogen.sh
+rm -rf ./install
+mkdir install
+./configure --prefix=$(pwd)/install
+make
+make install
+VALGRIND=$(pwd)/install/bin/valgrind
+$VALGRIND --tool=cachegrind --cache-sim=yes ls
+echo "VALGRIND installed"
+cd ..
 
 # Function to retrieve cache sizes in KB
 get_cache_size() {
@@ -96,47 +114,21 @@ LATENCY_L3=$(echo "$OUTPUT_L3" | grep "Each iteration took" | awk '{print $9}')
 LATENCY_MEM=$(echo "$OUTPUT_MEM" | grep "Each iteration took" | awk '{print $9}')
 
 # Run MLC for 20 times
-run_mlc_20() {
-    INCREMENTS=$(( (5 * L3_SIZE - L2_SIZE) / 19 )) # Increment between runs
+run_mlc_60() {
+    INCREMENTS=$(( (5 * L3_SIZE - L2_SIZE) / 59 )) # Increment between runs
     CURRENT_SIZE=$L2_SIZE
 
-    # Run MLC 20 times with increasing buffer sizes
-    for i in $(seq 1 20); do
+    # Run MLC multiple times with increasing buffer sizes
+    for i in $(seq 1 60); do
         run_mlc "$CURRENT_SIZE" "TMP"
         CURRENT_SIZE=$((CURRENT_SIZE + INCREMENTS))
         LATENCY_TMP=$(echo "$OUTPUT_TMP" | grep "Each iteration took" | awk '{print $9}')
         echo "$CURRENT_SIZE $LATENCY_TMP"
     done
 }
-run_mlc_20
+# run_mlc_60
 
 echo "MLC measurements completed."
-
-# Run the 7zip benchmark
-# From https://7-zip.opensource.jp/chm/cmdline/commands/bench.htm
-
-# Temporary file for storing MIPS
-TMP_FILE=$(mktemp)
-
-# Function to extract the last number from the line starting with "Tot:"
-extract_value() {
-    while IFS= read -r line; do
-        echo "$line" >> 7zip.log
-
-        if [[ "$line" == Tot:* ]]; then
-            echo "$line" | awk '{print $NF}' > "$TMP_FILE"
-        fi
-    done
-}
-
-# Run the 7zip bench and process its output
-command_to_run="taskset -c 1 7z b 10 -md21 -mmt1"
-$command_to_run | extract_value
-# TODO: get the CPU freq
-
-# Retrieve the value from the temporary file
-MIPS=$(cat "$TMP_FILE")
-rm -f "$TMP_FILE"
 
 # Output the result
 echo "Cache sizes retrieved:"
@@ -148,11 +140,47 @@ echo "LATENCY_L1: $LATENCY_L1 ns"
 echo "LATENCY_L2: $LATENCY_L2 ns"
 echo "LATENCY_L3: $LATENCY_L3 ns"
 echo "LATENCY_MEM: $LATENCY_MEM ns"
-echo ""
-echo "MIPS of 7zip under mmt1: $MIPS"
-echo "Time of 7zip under mmt1: $ZIPTIME"
 
 
-# PERFLIST=$(perf list)
-# export LATENCY_L1,LATENCY_L2,LATENCY_L3,LATENCY_MEM
-# ./miss_full.sh
+
+# Run PolyBenchC simulations
+cd PolyBenchC-4.2.1
+
+rm ./*-sm
+
+# Compile all the binaries that should be cache-sensitive
+gcc -I utilities -I linear-algebra/kernels/2mm utilities/polybench.c linear-algebra/kernels/2mm/2mm.c -DPOLYBENCH_TIME -DSMALL_DATASET -o 2mm-sm
+gcc -I utilities -I linear-algebra/kernels/3mm utilities/polybench.c linear-algebra/kernels/3mm/3mm.c -DPOLYBENCH_TIME -DSMALL_DATASET -o 3mm-sm
+gcc -I utilities -I linear-algebra/blas/symm utilities/polybench.c linear-algebra/blas/symm/symm.c -DPOLYBENCH_TIME -DSMALL_DATASET -o symm-sm
+gcc -I utilities -I linear-algebra/blas/syr2k utilities/polybench.c linear-algebra/blas/syr2k/syr2k.c -DPOLYBENCH_TIME -DSMALL_DATASET -o syr2k-sm
+gcc -I utilities -I linear-algebra/solvers/gramschmidt utilities/polybench.c linear-algebra/solvers/gramschmidt/gramschmidt.c -DPOLYBENCH_TIME -DSMALL_DATASET -lm -o gramschmidt-sm
+gcc -I utilities -I linear-algebra/solvers/ludcmp utilities/polybench.c linear-algebra/solvers/ludcmp/ludcmp.c -DPOLYBENCH_TIME -DSMALL_DATASET -lm -o ludcmp-sm
+gcc -I utilities -I linear-algebra/solvers/lu utilities/polybench.c linear-algebra/solvers/lu/lu.c -DPOLYBENCH_TIME -DSMALL_DATASET -lm -o lu-sm
+gcc -I utilities -I medley/nussinov utilities/polybench.c medley/nussinov/nussinov.c -DPOLYBENCH_TIME -DSMALL_DATASET -lm -o nussinov-sm
+gcc -I utilities -I datamining/covariance utilities/polybench.c datamining/covariance/covariance.c -DPOLYBENCH_TIME -DSMALL_DATASET -lm -o covariance-sm
+gcc -I utilities -I datamining/correlation utilities/polybench.c datamining/correlation/correlation.c -DPOLYBENCH_TIME -DSMALL_DATASET -lm -o correlation-sm
+echo "compiled cache-sensitive binaries in PolyBenchC-4.2.1"
+
+# Run the binaries. They must end with -sm
+BINARY_DIR="."
+BINARIES=($(find "$BINARY_DIR" -maxdepth 1 -type f -name '*-sm' | sort))
+
+echo "Cache-sensitive binaries list"
+for binary in "${BINARIES[@]}"; do
+    printf "$binary "
+done
+printf "\n"
+
+# for binary in "${BINARIES[@]}"; do
+#     # Run the binary and suppress its output
+#     OUTPUT=$("$binary" 2>&1)
+
+#     printf "$OUTPUT "
+# done
+# printf "\n"
+
+# Run simulation
+for binary in "${BINARIES[@]}"; do
+    echo "=====$binary====="
+    $VALGRIND --tool=cachegrind --I1=$((L1D_SIZE * 1024)),8,64 --D1=$((L1D_SIZE * 1024)),8,64 --L2=$((L2_SIZE * 1024)),8,64 --LLC=$((L3_SIZE * 1024)),16,64 --cache-sim=yes $binary 2>&1 | tee -a sim.log
+done

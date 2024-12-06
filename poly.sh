@@ -9,7 +9,7 @@ sudo sh -c 'echo 1 >/proc/sys/kernel/perf_event_paranoid'
 
 cd PolyBenchC-4.2.1
 
-# Compile all the binaries
+# Compile all the binaries that should be cache-sensitive
 gcc -I utilities -I linear-algebra/kernels/2mm utilities/polybench.c linear-algebra/kernels/2mm/2mm.c -DPOLYBENCH_TIME -DEXTRALARGE_DATASET -o 2mm-ex
 gcc -I utilities -I linear-algebra/kernels/3mm utilities/polybench.c linear-algebra/kernels/3mm/3mm.c -DPOLYBENCH_TIME -DEXTRALARGE_DATASET -o 3mm-ex
 gcc -I utilities -I linear-algebra/blas/symm utilities/polybench.c linear-algebra/blas/symm/symm.c -DPOLYBENCH_TIME -DEXTRALARGE_DATASET -o symm-ex
@@ -20,7 +20,7 @@ gcc -I utilities -I linear-algebra/solvers/lu utilities/polybench.c linear-algeb
 gcc -I utilities -I medley/nussinov utilities/polybench.c medley/nussinov/nussinov.c -DPOLYBENCH_TIME -DEXTRALARGE_DATASET -lm -o nussinov-ex
 gcc -I utilities -I datamining/covariance utilities/polybench.c datamining/covariance/covariance.c -DPOLYBENCH_TIME -DEXTRALARGE_DATASET -lm -o covariance-ex
 gcc -I utilities -I datamining/correlation utilities/polybench.c datamining/correlation/correlation.c -DPOLYBENCH_TIME -DEXTRALARGE_DATASET -lm -o correlation-ex
-echo "compiled all binaries in PolyBenchC-4.2.1"
+echo "compiled cache-sensitive binaries in PolyBenchC-4.2.1"
 
 # Run the binaries. They must end with -ex
 BINARY_DIR="."
@@ -33,9 +33,12 @@ printf "\n"
 
 for binary in "${BINARIES[@]}"; do
     # Run the binary and suppress its output
-    OUTPUT=$("$binary" 2>&1)
+    # OUTPUT=$("$binary" 2>&1)
 
-    printf "$OUTPUT "
+    # printf "$OUTPUT "
+    echo "=====$binary====="
+    sudo perf stat -e task-clock,cycles,instructions,mem_load_retired.l1_hit,mem_load_retired.l1_miss,\
+mem_load_retired.l2_hit,mem_load_retired.l2_miss,mem_load_retired.l3_hit,mem_load_retired.l3_miss $binary
 
     # # Print the binary name and the filtered result in a single line
     # if [ -n "$OUTPUT" ]; then
