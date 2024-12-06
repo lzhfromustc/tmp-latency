@@ -155,24 +155,24 @@ echo "LATENCY_MEM: $LATENCY_MEM ns"
 # Run PolyBenchC simulations
 cd PolyBenchC-4.2.1
 
-rm ./*-sm
+rm ./*-ex
 
 # Compile all the binaries that should be cache-sensitive
-gcc -I utilities -I linear-algebra/kernels/2mm utilities/polybench.c linear-algebra/kernels/2mm/2mm.c -DPOLYBENCH_TIME -DSMALL_DATASET -o 2mm-sm
-gcc -I utilities -I linear-algebra/kernels/3mm utilities/polybench.c linear-algebra/kernels/3mm/3mm.c -DPOLYBENCH_TIME -DSMALL_DATASET -o 3mm-sm
-gcc -I utilities -I linear-algebra/blas/symm utilities/polybench.c linear-algebra/blas/symm/symm.c -DPOLYBENCH_TIME -DSMALL_DATASET -o symm-sm
-gcc -I utilities -I linear-algebra/blas/syr2k utilities/polybench.c linear-algebra/blas/syr2k/syr2k.c -DPOLYBENCH_TIME -DSMALL_DATASET -o syr2k-sm
-gcc -I utilities -I linear-algebra/solvers/gramschmidt utilities/polybench.c linear-algebra/solvers/gramschmidt/gramschmidt.c -DPOLYBENCH_TIME -DSMALL_DATASET -lm -o gramschmidt-sm
-gcc -I utilities -I linear-algebra/solvers/ludcmp utilities/polybench.c linear-algebra/solvers/ludcmp/ludcmp.c -DPOLYBENCH_TIME -DSMALL_DATASET -lm -o ludcmp-sm
-gcc -I utilities -I linear-algebra/solvers/lu utilities/polybench.c linear-algebra/solvers/lu/lu.c -DPOLYBENCH_TIME -DSMALL_DATASET -lm -o lu-sm
-gcc -I utilities -I medley/nussinov utilities/polybench.c medley/nussinov/nussinov.c -DPOLYBENCH_TIME -DSMALL_DATASET -lm -o nussinov-sm
-gcc -I utilities -I datamining/covariance utilities/polybench.c datamining/covariance/covariance.c -DPOLYBENCH_TIME -DSMALL_DATASET -lm -o covariance-sm
-gcc -I utilities -I datamining/correlation utilities/polybench.c datamining/correlation/correlation.c -DPOLYBENCH_TIME -DSMALL_DATASET -lm -o correlation-sm
+gcc -I utilities -I linear-algebra/kernels/2mm utilities/polybench.c linear-algebra/kernels/2mm/2mm.c -DPOLYBENCH_TIME -DEXTRALARGE_DATASET -o 2mm-ex
+gcc -I utilities -I linear-algebra/kernels/3mm utilities/polybench.c linear-algebra/kernels/3mm/3mm.c -DPOLYBENCH_TIME -DEXTRALARGE_DATASET -o 3mm-ex
+gcc -I utilities -I linear-algebra/blas/symm utilities/polybench.c linear-algebra/blas/symm/symm.c -DPOLYBENCH_TIME -DEXTRALARGE_DATASET -o symm-ex
+gcc -I utilities -I linear-algebra/blas/syr2k utilities/polybench.c linear-algebra/blas/syr2k/syr2k.c -DPOLYBENCH_TIME -DEXTRALARGE_DATASET -o syr2k-ex
+gcc -I utilities -I linear-algebra/solvers/gramschmidt utilities/polybench.c linear-algebra/solvers/gramschmidt/gramschmidt.c -DPOLYBENCH_TIME -DEXTRALARGE_DATASET -lm -o gramschmidt-ex
+gcc -I utilities -I linear-algebra/solvers/ludcmp utilities/polybench.c linear-algebra/solvers/ludcmp/ludcmp.c -DPOLYBENCH_TIME -DEXTRALARGE_DATASET -lm -o ludcmp-ex
+gcc -I utilities -I linear-algebra/solvers/lu utilities/polybench.c linear-algebra/solvers/lu/lu.c -DPOLYBENCH_TIME -DEXTRALARGE_DATASET -lm -o lu-ex
+gcc -I utilities -I medley/nussinov utilities/polybench.c medley/nussinov/nussinov.c -DPOLYBENCH_TIME -DEXTRALARGE_DATASET -lm -o nussinov-ex
+gcc -I utilities -I datamining/covariance utilities/polybench.c datamining/covariance/covariance.c -DPOLYBENCH_TIME -DEXTRALARGE_DATASET -lm -o covariance-ex
+gcc -I utilities -I datamining/correlation utilities/polybench.c datamining/correlation/correlation.c -DPOLYBENCH_TIME -DEXTRALARGE_DATASET -lm -o correlation-ex
 echo "compiled cache-sensitive binaries in PolyBenchC-4.2.1"
 
-# Run the binaries. They must end with -sm
+# Run the binaries. They must end with -ex
 BINARY_DIR="."
-BINARIES=($(find "$BINARY_DIR" -maxdepth 1 -type f -name '*-sm' | sort))
+BINARIES=($(find "$BINARY_DIR" -maxdepth 1 -type f -name '*-ex' | sort))
 
 echo "Cache-sensitive binaries list"
 for binary in "${BINARIES[@]}"; do
@@ -211,7 +211,7 @@ for binary in "${BINARIES[@]}"; do
 
         echo "$OUTPUT" | tee -a ./sim.log
         echo "Expr: $EXPRESSION" | tee -a ./sim.log
-        printf "==========$binary==========\n>>>>>====Score: $SCORE====<<<<<" | tee -a ./sim.log
+        printf "==========$binary==========\n>>>>>====Score: $SCORE====<<<<<\n" | tee -a ./sim.log
         echo "" | tee -a ./sim.log
     ) &
 done
