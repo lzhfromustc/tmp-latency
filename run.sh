@@ -189,32 +189,59 @@ printf "\n"
 # printf "\n"
 
 # Run simulation in parallel
-for binary in "${BINARIES[@]}"; do
-    (
-        echo "==========$binary=========="
-        OUTPUT=$($VALGRIND --tool=cachegrind \
-            --I1=$((L1D_SIZE * 1024)),8,64 \
-            --D1=$((L1D_SIZE * 1024)),8,64 \
-            --L2=$((L2_SIZE * 1024)),8,64 \
-            --LLC=$((L3_SIZE * 1024)),16,64 \
-            --cache-sim=yes $binary 2>&1)
+# for binary in "${BINARIES[@]}"; do
+#     (
+#         echo "==========$binary=========="
+#         OUTPUT=$($VALGRIND --tool=cachegrind \
+#             --I1=$((L1D_SIZE * 1024)),8,64 \
+#             --D1=$((L1D_SIZE * 1024)),8,64 \
+#             --L2=$((L2_SIZE * 1024)),8,64 \
+#             --LLC=$((L3_SIZE * 1024)),16,64 \
+#             --cache-sim=yes $binary 2>&1)
 
-        L1_HITS=$(echo "$OUTPUT" | grep 'L1_hit' | awk '{print $3}')
-        L2_HITS=$(echo "$OUTPUT" | grep 'L2_hit' | awk '{print $3}')
-        L3_HITS=$(echo "$OUTPUT" | grep 'L3_hit' | awk '{print $3}')
-        L3_MISSES=$(echo "$OUTPUT" | grep 'L3_miss' | awk '{print $3}')
+#         L1_HITS=$(echo "$OUTPUT" | grep 'L1_hit' | awk '{print $3}')
+#         L2_HITS=$(echo "$OUTPUT" | grep 'L2_hit' | awk '{print $3}')
+#         L3_HITS=$(echo "$OUTPUT" | grep 'L3_hit' | awk '{print $3}')
+#         L3_MISSES=$(echo "$OUTPUT" | grep 'L3_miss' | awk '{print $3}')
 
-        EXPRESSION="scale=2; 10000 * 1000000000 / ($L1_HITS * $LATENCY_L1 + $L2_HITS * $LATENCY_L2 + $L3_HITS * $LATENCY_L3 + $L3_MISSES * $LATENCY_MEM)"
-        SCORE=$(echo "$EXPRESSION" | bc)
+#         EXPRESSION="scale=2; 10000 * 1000000000 / ($L1_HITS * $LATENCY_L1 + $L2_HITS * $LATENCY_L2 + $L3_HITS * $LATENCY_L3 + $L3_MISSES * $LATENCY_MEM)"
+#         SCORE=$(echo "$EXPRESSION" | bc)
 
-        rm cachegrind.out.*
+#         rm cachegrind.out.*
 
-        echo "$OUTPUT" | tee -a ./sim.log
-        echo "Expr: $EXPRESSION" | tee -a ./sim.log
-        printf "==========$binary==========\n>>>>>====Score: $SCORE====<<<<<\n" | tee -a ./sim.log
-        echo "" | tee -a ./sim.log
-    ) &
+#         echo "$OUTPUT" | tee -a ./sim.log
+#         echo "Expr: $EXPRESSION" | tee -a ./sim.log
+#         printf "==========$binary==========\n>>>>>====Score: $SCORE====<<<<<\n" | tee -a ./sim.log
+#         echo "" | tee -a ./sim.log
+#     ) &
+# done
+
+BINARIES_2=(2mm-ex 3mm-ex correlation-ex covariance-ex gramschmidt-ex lu-ex ludcmp-ex nussinov-ex symm-ex syr2k-ex)
+L1_HITS_2=(231675620673 367539937396 162847666996 162851301108 216699968519 1450210744357 1322531620188 472919718683 135582141474 176199866229)
+L2_HITS_2=(10960522020 18517552953 18622439098 18623445183 24463039968 36139833345 37524532299 25181675138 4399774124 10972337323)
+L3_HITS_2=(1279807510 1715638822 815213272 829446367 595013505 45274652351 45162992683 1066774967 333800811 1385381198)
+L3_MISSES_2=(524180448 975913507 540316515 539171682 247190605 1773877811 1868095286 721007199 334917986 1051870034)
+
+size=${#BINARIES_2[@]}
+
+for ((i = 0; i < size; i++)); do
+    binary=${BINARIES_2[i]}
+    L1_HITS_OLD=${L1_HITS_2[i]}
+    L2_HITS_OLD=${L2_HITS_2[i]}
+    L3_HITS_OLD=${L3_HITS_2[i]}
+    L3_MISSES_OLD=${L3_MISSES_2[i]}
+    TOTAL_HITS_OLD=$(echo "$L1_HITS_OLD + $L2_HITS_OLD + $L3_HITS_OLD + $L3_MISSES_OLD" | bc)
+    echo "==========$binary=========="
+
+    L1_HITS=$(echo "scale=2; $L1_HITS_OLD * sqrt($L1D_SIZE / 32)" | bc -l)
+    L2_HITS=$(echo "scale=2; $L2_HITS_OLD * sqrt($L2_SIZE / 1024)" | bc -l)
+    L3_HITS=$(echo "scale=2; $L3_HITS_OLD * sqrt($L3_SIZE / 28160)" | bc -l)
+    L3_MISSES=$(echo "scale=2; $TOTAL_HITS_OLD - $L1_HITS - $L2_HITS - $L3_HITS" | bc -l)
+
+    EXPRESSION="scale=2; 10000 * 1000000000 / ($L1_HITS * $LATENCY_L1 + $L2_HITS * $LATENCY_L2 + $L3_HITS * $LATENCY_L3 + $L3_MISSES * $LATENCY_MEM)"
+    SCORE=$(echo "$EXPRESSION" | bc)
+
+    echo "Expr: $EXPRESSION" | tee -a ./sim.log
+    printf ">>>>>====Score: $SCORE====<<<<<\n" | tee -a ./sim.log
+    echo "" | tee -a ./sim.log
 done
-
-# Wait for all background jobs to finish
-wait
