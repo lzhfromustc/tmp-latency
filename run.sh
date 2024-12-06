@@ -1,16 +1,16 @@
 #!/bin/bash
 
 # Run this with
-# TMP_DIR=$(pwd)/tmp-latency
-# if [ -d "$TMP_DIR" ]; then
-#     cd tmp-latency
-#     git restore .
-#     git pull
-# else
-#     git clone https://github.com/lzhfromustc/tmp-latency.git
-#     cd tmp-latency
-# fi
-# ./run.sh 2>&1 | tee -a run.log
+TMP_DIR=$(pwd)/tmp-latency
+if [ -d "$TMP_DIR" ]; then
+    cd tmp-latency
+    git restore .
+    git pull
+else
+    git clone https://github.com/lzhfromustc/tmp-latency.git
+    cd tmp-latency
+fi
+./run.sh 2>&1 | tee -a run.log
 
 # Prepare the huge pages that mlc requires
 sudo sh -c 'echo 4000 > /proc/sys/vm/nr_hugepages'
@@ -154,24 +154,24 @@ echo "LATENCY_MEM: $LATENCY_MEM ns"
 # Run PolyBenchC simulations
 cd PolyBenchC-4.2.1
 
-rm ./*-ex
+rm ./*-sm
 
 # Compile all the binaries that should be cache-sensitive
-gcc -I utilities -I linear-algebra/kernels/2mm utilities/polybench.c linear-algebra/kernels/2mm/2mm.c -DPOLYBENCH_TIME -DEXTRALARGE_DATASET -o 2mm-ex
-gcc -I utilities -I linear-algebra/kernels/3mm utilities/polybench.c linear-algebra/kernels/3mm/3mm.c -DPOLYBENCH_TIME -DEXTRALARGE_DATASET -o 3mm-ex
-gcc -I utilities -I linear-algebra/blas/symm utilities/polybench.c linear-algebra/blas/symm/symm.c -DPOLYBENCH_TIME -DEXTRALARGE_DATASET -o symm-ex
-gcc -I utilities -I linear-algebra/blas/syr2k utilities/polybench.c linear-algebra/blas/syr2k/syr2k.c -DPOLYBENCH_TIME -DEXTRALARGE_DATASET -o syr2k-ex
-gcc -I utilities -I linear-algebra/solvers/gramschmidt utilities/polybench.c linear-algebra/solvers/gramschmidt/gramschmidt.c -DPOLYBENCH_TIME -DEXTRALARGE_DATASET -lm -o gramschmidt-ex
-gcc -I utilities -I linear-algebra/solvers/ludcmp utilities/polybench.c linear-algebra/solvers/ludcmp/ludcmp.c -DPOLYBENCH_TIME -DEXTRALARGE_DATASET -lm -o ludcmp-ex
-gcc -I utilities -I linear-algebra/solvers/lu utilities/polybench.c linear-algebra/solvers/lu/lu.c -DPOLYBENCH_TIME -DEXTRALARGE_DATASET -lm -o lu-ex
-gcc -I utilities -I medley/nussinov utilities/polybench.c medley/nussinov/nussinov.c -DPOLYBENCH_TIME -DEXTRALARGE_DATASET -lm -o nussinov-ex
-gcc -I utilities -I datamining/covariance utilities/polybench.c datamining/covariance/covariance.c -DPOLYBENCH_TIME -DEXTRALARGE_DATASET -lm -o covariance-ex
-gcc -I utilities -I datamining/correlation utilities/polybench.c datamining/correlation/correlation.c -DPOLYBENCH_TIME -DEXTRALARGE_DATASET -lm -o correlation-ex
+gcc -I utilities -I linear-algebra/kernels/2mm utilities/polybench.c linear-algebra/kernels/2mm/2mm.c -DPOLYBENCH_TIME -DSMALL_DATASET -o 2mm-sm
+gcc -I utilities -I linear-algebra/kernels/3mm utilities/polybench.c linear-algebra/kernels/3mm/3mm.c -DPOLYBENCH_TIME -DSMALL_DATASET -o 3mm-sm
+gcc -I utilities -I linear-algebra/blas/symm utilities/polybench.c linear-algebra/blas/symm/symm.c -DPOLYBENCH_TIME -DSMALL_DATASET -o symm-sm
+gcc -I utilities -I linear-algebra/blas/syr2k utilities/polybench.c linear-algebra/blas/syr2k/syr2k.c -DPOLYBENCH_TIME -DSMALL_DATASET -o syr2k-sm
+gcc -I utilities -I linear-algebra/solvers/gramschmidt utilities/polybench.c linear-algebra/solvers/gramschmidt/gramschmidt.c -DPOLYBENCH_TIME -DSMALL_DATASET -lm -o gramschmidt-sm
+gcc -I utilities -I linear-algebra/solvers/ludcmp utilities/polybench.c linear-algebra/solvers/ludcmp/ludcmp.c -DPOLYBENCH_TIME -DSMALL_DATASET -lm -o ludcmp-sm
+gcc -I utilities -I linear-algebra/solvers/lu utilities/polybench.c linear-algebra/solvers/lu/lu.c -DPOLYBENCH_TIME -DSMALL_DATASET -lm -o lu-sm
+gcc -I utilities -I medley/nussinov utilities/polybench.c medley/nussinov/nussinov.c -DPOLYBENCH_TIME -DSMALL_DATASET -lm -o nussinov-sm
+gcc -I utilities -I datamining/covariance utilities/polybench.c datamining/covariance/covariance.c -DPOLYBENCH_TIME -DSMALL_DATASET -lm -o covariance-sm
+gcc -I utilities -I datamining/correlation utilities/polybench.c datamining/correlation/correlation.c -DPOLYBENCH_TIME -DSMALL_DATASET -lm -o correlation-sm
 echo "compiled cache-sensitive binaries in PolyBenchC-4.2.1"
 
-# Run the binaries. They must end with -ex
+# Run the binaries. They must end with -sm
 BINARY_DIR="."
-BINARIES=($(find "$BINARY_DIR" -maxdepth 1 -type f -name '*-ex' | sort))
+BINARIES=($(find "$BINARY_DIR" -maxdepth 1 -type f -name '*-sm' | sort))
 
 echo "Cache-sensitive binaries list"
 for binary in "${BINARIES[@]}"; do
@@ -190,5 +190,8 @@ printf "\n"
 # Run simulation
 for binary in "${BINARIES[@]}"; do
     echo "==========$binary=========="
-    $VALGRIND --tool=cachegrind --I1=$((L1D_SIZE * 1024)),8,64 --D1=$((L1D_SIZE * 1024)),8,64 --L2=$((L2_SIZE * 1024)),8,64 --LLC=$((L3_SIZE * 1024)),16,64 --cache-sim=yes $binary 2>&1 | tee -a sim.log
+    OUTPUT=$($VALGRIND --tool=cachegrind --I1=$((L1D_SIZE * 1024)),8,64 --D1=$((L1D_SIZE * 1024)),8,64 --L2=$((L2_SIZE * 1024)),8,64 --LLC=$((L3_SIZE * 1024)),16,64 --cache-sim=yes $binary 2>&1)
+    L1_HITS=$(echo "$OUTPUT" | grep 'L1_hit' | awk '{print $3}')
+    rm cachegrind.out.*
+    echo "$OUTPUT" >> ./sim.log
 done
