@@ -1,8 +1,15 @@
 #!/bin/bash
 
 # Run this with
-# git clone https://github.com/lzhfromustc/tmp-latency.git
-# cd ./tmp-latency
+# TMP_DIR=$(pwd/tmp-latency)
+# if [ -d "$TMP_DIR" ]; then
+#     cd tmp-latency
+#     git restore .
+#     git pull
+# else
+#     git clone https://github.com/lzhfromustc/tmp-latency.git
+#     cd tmp-latency
+# fi
 # ./run.sh 2>&1 | tee -a run.log
 
 # Prepare the huge pages that mlc requires
@@ -20,7 +27,7 @@ sudo apt install -y linux-tools-common linux-tools-$(uname -r)
 sudo apt install -y build-essential autoconf
 cd ..
 CACHEGRIND_DIR=$(pwd/cachegrind-L3)
-if [ -d "$DIR" ]; then
+if [ -d "$CACHEGRIND_DIR" ]; then
     cd cachegrind-L3
     git pull
 else
@@ -64,6 +71,7 @@ L2_SIZE=$(get_cache_size 2)  # L2 Cache
 L3_SIZE=$(get_cache_size 3)  # L3 Cache
 
 # Validate mlc binary exists
+cd ./tmp-latency
 MLC_BINARY="./mlc"
 if [ ! -x "$MLC_BINARY" ]; then
     echo "Error: MLC binary not found or not executable. Make sure ./mlc exists and is executable."
