@@ -1,16 +1,16 @@
 #!/bin/bash
 
 # Run this with
-TMP_DIR=$(pwd)/tmp-latency
-if [ -d "$TMP_DIR" ]; then
-    cd tmp-latency
-    git restore .
-    git pull
-else
-    git clone https://github.com/lzhfromustc/tmp-latency.git
-    cd tmp-latency
-fi
-./run.sh 2>&1 | tee -a run.log
+# TMP_DIR=$(pwd)/tmp-latency
+# if [ -d "$TMP_DIR" ]; then
+#     cd tmp-latency
+#     git restore .
+#     git pull
+# else
+#     git clone https://github.com/lzhfromustc/tmp-latency.git
+#     cd tmp-latency
+# fi
+# ./run.sh 2>&1 | tee -a run.log
 
 # Prepare the huge pages that mlc requires
 sudo sh -c 'echo 4000 > /proc/sys/vm/nr_hugepages'
