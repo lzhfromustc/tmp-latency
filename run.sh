@@ -230,17 +230,22 @@ for ((i = 0; i < size; i++)); do
     L3_HITS_OLD=${L3_HITS_2[i]}
     L3_MISSES_OLD=${L3_MISSES_2[i]}
     TOTAL_HITS_OLD=$(echo "$L1_HITS_OLD + $L2_HITS_OLD + $L3_HITS_OLD + $L3_MISSES_OLD" | bc)
-    echo "==========$binary=========="
+    # echo "==========$binary=========="
 
-    L1_HITS=$(echo "scale=2; $L1_HITS_OLD * sqrt($L1D_SIZE / 32)" | bc -l)
-    L2_HITS=$(echo "scale=2; $L2_HITS_OLD * sqrt($L2_SIZE / 1024)" | bc -l)
-    L3_HITS=$(echo "scale=2; $L3_HITS_OLD * sqrt($L3_SIZE / 28160)" | bc -l)
-    L3_MISSES=$(echo "scale=2; $TOTAL_HITS_OLD - $L1_HITS - $L2_HITS - $L3_HITS" | bc -l)
+    L1_HITS=$(echo "scale=2; $L1_HITS_OLD * sqrt(sqrt($L1D_SIZE / 32))" | bc -l)
+    L2_HITS=$(echo "scale=2; $L2_HITS_OLD * sqrt(sqrt($L2_SIZE / 1024))" | bc -l)
+    L3_HITS=$(echo "scale=2; $L3_HITS_OLD * sqrt(sqrt($L3_SIZE / 28160))" | bc -l)
+    L3_MISSES=$(echo "scale=2; $L3_HITS_OLD * sqrt(sqrt(28160 / $L3_SIZE))" | bc -l)
+
+    NEW_TOTAL=$(echo "$L1_HITS + $L2_HITS + $L3_HITS + $L3_MISSES" | bc)
+    L1_HITS=$(echo "$L1_HITS / $NEW_TOTAL * $TOTAL_HITS_OLD" | bc)
+    L2_HITS=$(echo "$L2_HITS / $NEW_TOTAL * $TOTAL_HITS_OLD" | bc)
+    L3_HITS=$(echo "$L3_HITS / $NEW_TOTAL * $TOTAL_HITS_OLD" | bc)
+    L3_MISSES=$(echo "$L3_MISSES / $NEW_TOTAL * $TOTAL_HITS_OLD" | bc)
 
     EXPRESSION="scale=2; 10000 * 1000000000 / ($L1_HITS * $LATENCY_L1 + $L2_HITS * $LATENCY_L2 + $L3_HITS * $LATENCY_L3 + $L3_MISSES * $LATENCY_MEM)"
     SCORE=$(echo "$EXPRESSION" | bc)
 
-    echo "Expr: $EXPRESSION" | tee -a ./sim.log
-    printf ">>>>>====Score: $SCORE====<<<<<\n" | tee -a ./sim.log
-    echo "" | tee -a ./sim.log
+    printf "$SCORE " | tee -a ./sim.log
 done
+printf "\n"
