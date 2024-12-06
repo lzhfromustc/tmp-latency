@@ -192,6 +192,14 @@ for binary in "${BINARIES[@]}"; do
     echo "==========$binary=========="
     OUTPUT=$($VALGRIND --tool=cachegrind --I1=$((L1D_SIZE * 1024)),8,64 --D1=$((L1D_SIZE * 1024)),8,64 --L2=$((L2_SIZE * 1024)),8,64 --LLC=$((L3_SIZE * 1024)),16,64 --cache-sim=yes $binary 2>&1)
     L1_HITS=$(echo "$OUTPUT" | grep 'L1_hit' | awk '{print $3}')
+    L2_HITS=$(echo "$OUTPUT" | grep 'L2_hit' | awk '{print $3}')
+    L3_HITS=$(echo "$OUTPUT" | grep 'L3_hit' | awk '{print $3}')
+    L3_MISSES=$(echo "$OUTPUT" | grep 'L3_miss' | awk '{print $3}')
+    EXPRESSION="$L1_HITS * $LATENCY_L1 + $L2_HITS * $LATENCY_L2 + $L3_HITS * $LATENCY_L3 + $L3_MISSES * $LATENCY_MEM"
+    SCORE=$(echo "$EXPRESSION" | bc)
     rm cachegrind.out.*
-    echo "$OUTPUT" >> ./sim.log
+    echo "$OUTPUT" | tee -a ./sim.log
+    echo "Expr: $EXPRESSION" | tee -a ./sim.log
+    echo ">>>>>====Score: $SCORE====<<<<<" | tee -a ./sim.log
+    echo "" | tee -a ./sim.log
 done
