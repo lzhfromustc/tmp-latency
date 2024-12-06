@@ -1,6 +1,7 @@
 #!/bin/bash
 
 # Run this with
+# cd ~
 # TMP_DIR=$(pwd)/tmp-latency
 # if [ -d "$TMP_DIR" ]; then
 #     cd tmp-latency
@@ -195,7 +196,7 @@ for binary in "${BINARIES[@]}"; do
     L2_HITS=$(echo "$OUTPUT" | grep 'L2_hit' | awk '{print $3}')
     L3_HITS=$(echo "$OUTPUT" | grep 'L3_hit' | awk '{print $3}')
     L3_MISSES=$(echo "$OUTPUT" | grep 'L3_miss' | awk '{print $3}')
-    EXPRESSION="scale=2; 1000000000 / ($L1_HITS * $LATENCY_L1 + $L2_HITS * $LATENCY_L2 + $L3_HITS * $LATENCY_L3 + $L3_MISSES * $LATENCY_MEM)"
+    EXPRESSION="scale=2; 10000 * 1000000000 / ($L1_HITS * $LATENCY_L1 + $L2_HITS * $LATENCY_L2 + $L3_HITS * $LATENCY_L3 + $L3_MISSES * $LATENCY_MEM)"
     SCORE=$(echo "$EXPRESSION" | bc)
     rm cachegrind.out.*
     echo "$OUTPUT" | tee -a ./sim.log
