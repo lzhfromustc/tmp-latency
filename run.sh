@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Run this with
-# TMP_DIR=$(pwd/tmp-latency)
+# TMP_DIR=$(pwd)/tmp-latency
 # if [ -d "$TMP_DIR" ]; then
 #     cd tmp-latency
 #     git restore .
@@ -26,7 +26,7 @@ sudo apt install -y linux-tools-common linux-tools-$(uname -r)
 # Install and compile my valgrind
 sudo apt install -y build-essential autoconf
 cd ..
-CACHEGRIND_DIR=$(pwd/cachegrind-L3)
+CACHEGRIND_DIR=$(pwd)/cachegrind-L3
 if [ -d "$CACHEGRIND_DIR" ]; then
     cd cachegrind-L3
     git pull
