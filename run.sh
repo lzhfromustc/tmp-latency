@@ -21,8 +21,8 @@ sudo sh -c 'echo 1 >/proc/sys/kernel/perf_event_paranoid'
 
 # Install 7zip and perf
 sudo apt update  > /dev/null 2>&1
-sudo apt install -y p7zip-full p7zip-rar
-sudo apt install -y linux-tools-common linux-tools-$(uname -r)
+sudo apt install -y p7zip-full p7zip-rar  > /dev/null 2>&1
+sudo apt install -y linux-tools-common linux-tools-$(uname -r)  > /dev/null 2>&1
 
 # Install and compile my valgrind
 # sudo apt install -y build-essential autoconf
@@ -229,19 +229,18 @@ for ((i = 0; i < size; i++)); do
     L2_HITS_OLD=${L2_HITS_2[i]}
     L3_HITS_OLD=${L3_HITS_2[i]}
     L3_MISSES_OLD=${L3_MISSES_2[i]}
-    TOTAL_HITS_OLD=$(echo "$L1_HITS_OLD + $L2_HITS_OLD + $L3_HITS_OLD + $L3_MISSES_OLD" | bc)
-    # echo "==========$binary=========="
+    TOTAL_HITS_OLD=$(echo "scale=2; $L1_HITS_OLD + $L2_HITS_OLD + $L3_HITS_OLD + $L3_MISSES_OLD" | bc -l)
 
     L1_HITS=$(echo "scale=2; $L1_HITS_OLD * sqrt(sqrt($L1D_SIZE / 32))" | bc -l)
     L2_HITS=$(echo "scale=2; $L2_HITS_OLD * sqrt(sqrt($L2_SIZE / 1024))" | bc -l)
     L3_HITS=$(echo "scale=2; $L3_HITS_OLD * sqrt(sqrt($L3_SIZE / 28160))" | bc -l)
     L3_MISSES=$(echo "scale=2; $L3_HITS_OLD * sqrt(sqrt(28160 / $L3_SIZE))" | bc -l)
 
-    NEW_TOTAL=$(echo "$L1_HITS + $L2_HITS + $L3_HITS + $L3_MISSES" | bc)
-    L1_HITS=$(echo "$L1_HITS / $NEW_TOTAL * $TOTAL_HITS_OLD" | bc)
-    L2_HITS=$(echo "$L2_HITS / $NEW_TOTAL * $TOTAL_HITS_OLD" | bc)
-    L3_HITS=$(echo "$L3_HITS / $NEW_TOTAL * $TOTAL_HITS_OLD" | bc)
-    L3_MISSES=$(echo "$L3_MISSES / $NEW_TOTAL * $TOTAL_HITS_OLD" | bc)
+    NEW_TOTAL=$(echo "scale=2; $L1_HITS + $L2_HITS + $L3_HITS + $L3_MISSES" | bc -l)
+    L1_HITS=$(echo "scale=2; $L1_HITS / $NEW_TOTAL * $TOTAL_HITS_OLD" | bc -l)
+    L2_HITS=$(echo "scale=2; $L2_HITS / $NEW_TOTAL * $TOTAL_HITS_OLD" | bc -l)
+    L3_HITS=$(echo "scale=2; $L3_HITS / $NEW_TOTAL * $TOTAL_HITS_OLD" | bc -l)
+    L3_MISSES=$(echo "scale=2; $L3_MISSES / $NEW_TOTAL * $TOTAL_HITS_OLD" | bc -l)
 
     EXPRESSION="scale=2; 10000 * 1000000000 / ($L1_HITS * $LATENCY_L1 + $L2_HITS * $LATENCY_L2 + $L3_HITS * $LATENCY_L3 + $L3_MISSES * $LATENCY_MEM)"
     SCORE=$(echo "$EXPRESSION" | bc)
