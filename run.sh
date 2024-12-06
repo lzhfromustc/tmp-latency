@@ -195,7 +195,7 @@ for binary in "${BINARIES[@]}"; do
     L2_HITS=$(echo "$OUTPUT" | grep 'L2_hit' | awk '{print $3}')
     L3_HITS=$(echo "$OUTPUT" | grep 'L3_hit' | awk '{print $3}')
     L3_MISSES=$(echo "$OUTPUT" | grep 'L3_miss' | awk '{print $3}')
-    EXPRESSION="$L1_HITS * $LATENCY_L1 + $L2_HITS * $LATENCY_L2 + $L3_HITS * $LATENCY_L3 + $L3_MISSES * $LATENCY_MEM"
+    EXPRESSION="1000000000 / ($L1_HITS * $LATENCY_L1 + $L2_HITS * $LATENCY_L2 + $L3_HITS * $LATENCY_L3 + $L3_MISSES * $LATENCY_MEM)"
     SCORE=$(echo "$EXPRESSION" | bc)
     rm cachegrind.out.*
     echo "$OUTPUT" | tee -a ./sim.log
