@@ -25,26 +25,26 @@ sudo apt install -y p7zip-full p7zip-rar
 sudo apt install -y linux-tools-common linux-tools-$(uname -r)
 
 # Install and compile my valgrind
-sudo apt install -y build-essential autoconf
-cd ..
-CACHEGRIND_DIR=$(pwd)/cachegrind-L3
-if [ -d "$CACHEGRIND_DIR" ]; then
-    cd cachegrind-L3
-    git pull
-else
-    git clone https://github.com/lzhfromustc/cachegrind-L3.git
-    cd cachegrind-L3
-fi
-./autogen.sh
-rm -rf ./install
-mkdir install
-./configure --prefix=$(pwd)/install
-make
-make install
-VALGRIND=$(pwd)/install/bin/valgrind
-$VALGRIND --tool=cachegrind --cache-sim=yes ls
-echo "VALGRIND installed"
-cd ..
+# sudo apt install -y build-essential autoconf
+# cd ..
+# CACHEGRIND_DIR=$(pwd)/cachegrind-L3
+# if [ -d "$CACHEGRIND_DIR" ]; then
+#     cd cachegrind-L3
+#     git pull
+# else
+#     git clone https://github.com/lzhfromustc/cachegrind-L3.git
+#     cd cachegrind-L3
+# fi
+# ./autogen.sh
+# rm -rf ./install
+# mkdir install
+# ./configure --prefix=$(pwd)/install
+# make
+# make install
+# VALGRIND=$(pwd)/install/bin/valgrind
+# $VALGRIND --tool=cachegrind --cache-sim=yes ls
+# echo "VALGRIND installed"
+# cd ../tmp-latency
 
 # Function to retrieve cache sizes in KB
 get_cache_size() {
@@ -72,7 +72,6 @@ L2_SIZE=$(get_cache_size 2)  # L2 Cache
 L3_SIZE=$(get_cache_size 3)  # L3 Cache
 
 # Validate mlc binary exists
-cd ./tmp-latency
 MLC_BINARY="./mlc"
 if [ ! -x "$MLC_BINARY" ]; then
     echo "Error: MLC binary not found or not executable. Make sure ./mlc exists and is executable."
