@@ -76,7 +76,7 @@ printf "\n"
 
 for binary in "${BINARIES[@]}"; do
     # Run the binary and suppress its output
-    OUTPUT=$("taskset -c 0 $binary" 2>&1)
+    OUTPUT=$(taskset -c 0 "$binary" 2>&1)
 
     printf "$OUTPUT "
 done
@@ -117,7 +117,7 @@ printf "\n"
 
 for binary in "${BINARIES[@]}"; do
     # Run the binary and suppress its output
-    OUTPUT=$("taskset -c 0 $binary" 2>&1)
+    OUTPUT=$(taskset -c 0 "$binary" 2>&1)
 
     printf "$OUTPUT "
 done
