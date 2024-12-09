@@ -11,7 +11,7 @@
 #     git clone https://github.com/lzhfromustc/tmp-latency.git
 #     cd tmp-latency
 #     sudo apt update > /dev/null 2>&1
-#     sudo apt install -y build-essential
+#     sudo apt install -y build-essential util-linux
 # fi
 # ./poly.sh | tee ../poly.log
 # cd ..
@@ -36,8 +36,8 @@ gcc -I utilities -I datamining/correlation utilities/polybench.c datamining/corr
 echo "compiled cache-sensitive binaries in PolyBenchC-4.2.1"
 
 echo "For freq measurement"
-binary="symm-ex"
-./"$binary" 2>&1 &
+binary="2mm-ex"
+taskset -c 0 ./"$binary" 2>&1 &
 binary_pid=$!
 (
     # Wait for 5 seconds before starting CPU frequency monitoring
@@ -48,9 +48,11 @@ binary_pid=$!
     for i in {1..30}; do
         # Get the current CPU frequency
         cpu_freq=$(grep "cpu MHz" /proc/cpuinfo | awk '{print $4}' | head -n 1)
+        # printf "$cpu_freq "
         cpu_freqs+=("$cpu_freq")
         sleep 1
     done
+    # printf "\n"
 
     # Calculate the average CPU frequency
     total=0
@@ -74,7 +76,7 @@ printf "\n"
 
 for binary in "${BINARIES[@]}"; do
     # Run the binary and suppress its output
-    OUTPUT=$("$binary" 2>&1)
+    OUTPUT=$("taskset -c 0 $binary" 2>&1)
 
     printf "$OUTPUT "
 done
@@ -115,7 +117,7 @@ printf "\n"
 
 for binary in "${BINARIES[@]}"; do
     # Run the binary and suppress its output
-    OUTPUT=$("$binary" 2>&1)
+    OUTPUT=$("taskset -c 0 $binary" 2>&1)
 
     printf "$OUTPUT "
 done
