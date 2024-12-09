@@ -1,7 +1,20 @@
 #!/bin/bash
 
 # Run this script with
-# sudo apt install -y build-essential; cd tmp-latency; git pull; ./poly.sh | tee ../poly.log; cd ..
+# cd ~
+# TMP_DIR=$(pwd)/tmp-latency
+# if [ -d "$TMP_DIR" ]; then
+#     cd tmp-latency
+#     git restore .
+#     git pull
+# else
+#     git clone https://github.com/lzhfromustc/tmp-latency.git
+#     cd tmp-latency
+#     sudo apt update > /dev/null 2>&1
+#     sudo apt install -y build-essential
+# fi
+# ./poly.sh | tee ../poly.log
+# cd ..
 
 
 # Prepare the perf config
@@ -67,7 +80,7 @@ for binary in "${BINARIES[@]}"; do
 done
 printf "\n"
 
-echo "About to execute new binaries
+echo "About to execute new binaries"
 
 rm ./*-ex
 
