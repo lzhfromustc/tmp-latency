@@ -22,6 +22,7 @@ sudo sh -c 'echo 1 >/proc/sys/kernel/perf_event_paranoid'
 
 cd PolyBenchC-4.2.1
 
+rm -f ./*-ex
 # Compile all the binaries that should be cache-sensitive
 gcc -I utilities -I linear-algebra/kernels/2mm utilities/polybench.c linear-algebra/kernels/2mm/2mm.c -DPOLYBENCH_TIME -DEXTRALARGE_DATASET -o 2mm-ex
 gcc -I utilities -I linear-algebra/kernels/3mm utilities/polybench.c linear-algebra/kernels/3mm/3mm.c -DPOLYBENCH_TIME -DEXTRALARGE_DATASET -o 3mm-ex
